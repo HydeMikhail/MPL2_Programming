@@ -13,6 +13,7 @@ PHYSICAL GPIO:
 
 11 - GPIO (OUT)    ::: Pass LED (GREEN)
 12 - GPIO (OUT)    ::: Idle LED (RED)
+16 - GPIO (OUT)    ::: Status LED (WHITE)
 
 13 - GPIO (IN)     ::: Trigger Calibration Button
 15 - GPIO (IN)     ::: Close Application Button
@@ -48,11 +49,13 @@ gpio.setwarnings(False)
 gpio.setup(7, gpio.OUT)
 gpio.setup(11, gpio.OUT)
 gpio.setup(12, gpio.OUT)
+gpio.setup(16, gpio.OUT)
 gpio.setup(37, gpio.OUT)
 
 gpio.output(7, gpio.HIGH)
 gpio.output(11, gpio.HIGH)
 gpio.output(12, gpio.HIGH)
+gpio.output(16, gpio.HIGH)
 gpio.output(37, gpio.LOW)
 
 gpio.setup(13, gpio.IN)
@@ -66,22 +69,33 @@ ser.close()
 time.sleep(3)
 
 gpio.output(11, gpio.LOW)
+gpio.output(16, gpio.LOW)
 
 while True:
 
     if gpio.input(13):
-        util.start_seq(37, 7)
+
+        util.start_seq(37, 7, 12, 16)
         time.sleep(0.25)
         util.open_serial(ser)
-        rt = ser.readline()
+
+        try:
+            rt = ser.readline()
+        except serial.SerialException:
+            print('Serial Exception. Problem with communication.')
+            print(rt)
+            util.error_ind(12)
+
         try:
             sp = util.calc_set_point(int(rt.decode('ascii', 'ignore')))
             print(sp)
+            util.pass_ind(12, 16, 11)
         except ValueError:
+            print('Value Error. Value Received was not an integer.')
             util.error_ind(12)
-        util.end_seq(37, 7)
+
+        util.end_seq(37, 7, 12, 16)
         ser.close()
-        # Calculate Trip Point
         # Send Trip point to PIC
         # Wait for response
         # Verify response

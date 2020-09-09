@@ -16,21 +16,25 @@ def open_serial(device):
     os.system('sudo chmod a+rw /dev/ttyS0')
     device.open()
 
-def start_seq(vdd, vpp):
+def start_seq(vdd, vpp, idleLedPin, statusPin):
     '''
     Applies power to VDD and pulls
     VPP to GND
     '''
     gpio.output(vpp, gpio.LOW)
     gpio.output(vdd, gpio.HIGH)
+    gpio.output(idleLedPin, gpio.LOW)
+    gpio.output(statusPin, gpio.HIGH)
 
-def end_seq(vdd, vpp):
+def end_seq(vdd, vpp, idleLedPin, statusPin):
     '''
     Turns off power to VDD and
     resets VPP to HIGH
     '''
     gpio.output(vpp, gpio.HIGH)
     gpio.output(vdd, gpio.LOW)
+    gpio.output(idleLedPin, gpio.HIGH)
+    gpio.output(statusPin, gpio.LOW)
 
 def error_ind(idleLedPin):
     '''
@@ -44,6 +48,17 @@ def error_ind(idleLedPin):
         time.sleep(0.25)
         gpio.output(idleLedPin, gpio.HIGH)
         time.sleep(0.25)
+
+def pass_ind(idleLedPin, statusPin, passPin):
+    '''
+    Activates Green LED to show the process has
+    passed.
+    '''
+    gpio.output(idleLedPin, gpio.LOW)
+    gpio.output(statusPin, gpio.LOW)
+    gpio.output(passPin, gpio.HIGH)
+    time.sleep(3)
+    gpio.output(passPin, gpio.LOW)
 
 def calc_set_point(roomTempReading):
     '''
