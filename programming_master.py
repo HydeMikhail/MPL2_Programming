@@ -43,6 +43,10 @@ import serial
 import RPi.GPIO as gpio
 import util
 
+# HEX Conversion Hash Table
+hexConv = {'a': 10, 'b': 11, 'c': 12, 'd':13, 'e': 14, 'f': 15}
+
+# GPIO SETUP
 gpio.setmode(gpio.BOARD)
 gpio.setwarnings(False)
 
@@ -61,37 +65,63 @@ gpio.output(37, gpio.LOW)
 gpio.setup(13, gpio.IN)
 gpio.setup(15, gpio.IN)
 
+# Serial Comm Permissions
 os.system('sudo chmod a+rw /dev/ttyS0')
 
+# Set up serial port (initialized to closed)
 ser = serial.Serial('/dev/ttyS0', 9600, timeout=1)
 ser.close()
 
+# Startup Time
 time.sleep(3)
 
+# System Ready Indication
 gpio.output(11, gpio.LOW)
 gpio.output(16, gpio.LOW)
 
 while True:
 
+    # When Program button is pressed
     if gpio.input(13):
 
+        msg = []
+        val = []
+
         util.start_seq(37, 7, 12, 16)
-        time.sleep(0.25)
+        time.sleep(0.53)
         util.open_serial(ser)
 
         try:
-            rt = ser.readline()
+            while True:
+
+                if len(msg) > 50:
+                    break
+
+                if msg == ['', '']:
+                    break
+
+                rt = ser.read()
+                msg.append(rt.decode('ascii', 'ignore'))
+
+                print(msg)
+
+            for i in msg:
+                if i not in ('\x00', ''):
+                    val.append(i)
+
+            val = [int(i) if i.isdigit() else i.lower() for i in val]
+            print(val)
+
+            if val[0] != 'g':
+                util.error_ind(12)
+            else:
+                if sum(val[1:5]) == hexConv[val[5]]:
+                    util.pass_ind(12, 16, 11)
+                else:
+                    util.error_ind(12)
+
         except serial.SerialException:
             print('Serial Exception. Problem with communication.')
-            print(rt)
-            util.error_ind(12)
-
-        try:
-            sp = util.calc_set_point(int(rt.decode('ascii', 'ignore')))
-            print(sp)
-            util.pass_ind(12, 16, 11)
-        except ValueError:
-            print('Value Error. Value Received was not an integer.')
             util.error_ind(12)
 
         util.end_seq(37, 7, 12, 16)
