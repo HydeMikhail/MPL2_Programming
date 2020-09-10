@@ -57,7 +57,7 @@ def pass_ind(idleLedPin, statusPin, passPin):
     gpio.output(idleLedPin, gpio.LOW)
     gpio.output(statusPin, gpio.LOW)
     gpio.output(passPin, gpio.HIGH)
-    time.sleep(3)
+    time.sleep(2)
     gpio.output(passPin, gpio.LOW)
 
 def calc_set_point(roomTempReading):

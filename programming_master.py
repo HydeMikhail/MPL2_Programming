@@ -103,16 +103,13 @@ while True:
                 rt = ser.read()
                 msg.append(rt.decode('ascii', 'ignore'))
 
-                print(msg)
-
             for i in msg:
                 if i not in ('\x00', ''):
                     val.append(i)
 
             val = [int(i) if i.isdigit() else i.lower() for i in val]
-            print(val)
 
-            if val[0] != 'g':
+            if val == [] or val[0] != 'g':
                 util.error_ind(12)
             else:
                 if sum(val[1:5]) == hexConv[val[5]]:
