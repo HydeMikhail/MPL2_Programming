@@ -43,9 +43,6 @@ import serial
 import RPi.GPIO as gpio
 import util
 
-# HEX Conversion Hash Table
-hexConv = {'a': 10, 'b': 11, 'c': 12, 'd':13, 'e': 14, 'f': 15}
-
 # GPIO SETUP
 gpio.setmode(gpio.BOARD)
 gpio.setwarnings(False)
@@ -81,40 +78,48 @@ gpio.output(16, gpio.LOW)
 
 while True:
 
+    # Exit Program if Button is Pressed
+    if gpio.input(15):
+        break
+
     # When Program button is pressed
     if gpio.input(13):
 
-        msg = []
-        val = []
-
+        # Give Programming Indication and Initialize
+        # Serial Protocol
         util.start_seq(37, 7, 12, 16)
         time.sleep(0.53)
         util.open_serial(ser)
 
         try:
-            while True:
 
-                if len(msg) > 50:
-                    break
-
-                if msg == ['', '']:
-                    break
-
-                rt = ser.read()
-                msg.append(rt.decode('ascii', 'ignore'))
-
-            for i in msg:
-                if i not in ('\x00', ''):
-                    val.append(i)
-
-            val = [int(i) if i.isdigit() else i.lower() for i in val]
-
-            if val == [] or val[0] != 'g':
+            # Collect MSG
+            msg = util.read_msg(ser)
+            print('Received ' + str(msg) + '\n') ### DELETEABLE ###
+            # Filter MSG to Necessary Data
+            val = util.filter_msg(msg)
+            print('Message: ' + str(val) + '\n') ### DELETEABLE ###
+            # Create Copy of filtered message with integers
+            intVal = util.conv_digits(val)
+            ser.close()
+            # Verify Temperature Reading MSG
+            if val == [] or val[0] != 'G':
                 util.error_ind(12)
+                print('Message Missing or Incomplete')
             else:
-                if sum(val[1:5]) == hexConv[val[5]]:
+                # Prepare to Return Set Point MSG
+                if sum(intVal[1:5]) == util.hexConv[intVal[5]]:
+                    # Calculate Set Point MSG
+                    setPoint = util.calc_set_point(util.pull_hex_2_dec(val))
+                    print('Set Point: ' + str(setPoint) + '\n') ### DELETEABLE ###
+                    spMsg = util.build_sp_msg(setPoint)
+                    print('Set Point Message: ' + str(spMsg) + '\n') ### DELETEABLE ###
+                    util.open_serial(ser)
+                    util.send_msg(spMsg, ser)
+                    # Read Verification Message
                     util.pass_ind(12, 16, 11)
                 else:
+                    print('Checksum is not correct')
                     util.error_ind(12)
 
         except serial.SerialException:
@@ -128,9 +133,7 @@ while True:
         # Verify response
         # Activate PASS LED
 
-    if gpio.input(15):
-        break
-
-    time.sleep(0.001)
+    # Sets Program loop rate. Keeps CPU from full-throttling
+    time.sleep(0.00005)
 
 gpio.cleanup()
