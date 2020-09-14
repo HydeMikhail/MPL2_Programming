@@ -8,47 +8,51 @@ import time
 import os
 import RPi.GPIO as gpio
 
-# HEX Conversion Hash Table
-hexConv = {0: 0, 1: 1, 2: 2, 3: 3,
-           4: 4, 5: 5, 6: 6, 7: 7,
-           8: 8, 9: 9, 'A': 10,
-           'B': 11, 'C': 12, 'D':13,
-           'E': 14, 'F': 15}
+####################################
+### Number Conversion Has Tables ###
+####################################
 
-decConv = {0: 0, 1: 1, 2: 2, 3: 3,
-           4: 4, 5: 5, 6: 6, 7: 7,
-           8: 8, 9: 9, 10: 'A',
-           11: 'B', 12: 'C', 13: 'D',
-           14: 'E', 15: 'F'}
+hexConv = {'0': 0, '1': 1, '2': 2, '3': 3,
+           '4': 4, '5': 5, '6': 6, '7': 7,
+           '8': 8, '9': 9, 'A': 10, 'B': 11,
+           'C': 12, 'D':13, 'E': 14, 'F': 15,
+           'G': 'G'}
 
-# SERIAL UTILITY
+acceptedChars = ['A', 'B', 'C', 'D',
+                 'E', 'F', 'G', 'H',
+                 'Y', '0', '1', '2',
+                 '3', '4', '5', '6',
+                 '7', '8', '9']
 
-def read_msg(device):
+#######################
+#### SERIAL UTILITY ###
+#######################
+
+### Serial Messaging ###
+
+def read_msg(device, messageLength, timeout):
     '''
     Method to collect the data being sent over
     serial to the Pi
     '''
+    device.flush()
+    i = 0
     msg = []
     while True:
 
-        if len(msg) > 50:
+        if i > timeout:
             break
 
-        if msg == ['', '']:
+        if len(msg) == messageLength:
             break
 
         rawTemp = device.read()
-        msg.append(rawTemp.decode('ascii', 'ignore'))
+        if rawTemp.decode('ascii', 'ignore') in acceptedChars:
+            msg.append(rawTemp.decode('ascii', 'ignore'))
+
+        i += 1
 
     return msg
-
-def send_msg(msg, device):
-    '''
-    Converts message into a serial-friendly
-    format and sends it to the PIC
-    '''
-    strMsg = ''.join(msg)
-    device.write(strMsg.encode('ascii'))
 
 def make_checksum(number):
     '''
@@ -69,7 +73,7 @@ def build_sp_msg(setPoint):
     prefaced with an ID character and followed
     by a checksum
     '''
-    spMsg = ['H', '0']
+    spMsg = ['A', 'A', 'H', '0']
     setPoint = hex(setPoint).upper()
     for i in setPoint[2:]:
         spMsg.append(i)
@@ -77,27 +81,52 @@ def build_sp_msg(setPoint):
 
     return spMsg
 
-def filter_msg(msg):
+def send_msg(msg, device):
     '''
-    Removes unnecessary data from the message
-    packet
+    Converts message into a serial-friendly
+    format and sends it to the PIC
     '''
-    val = []
     for i in msg:
-        if i not in ('\x00', ''):
-            val.append(i)
+        device.write(i.encode('ascii', 'ignore'))
+        time.sleep(0.001)
 
-    return val
+def send_dumb_msg(device):
+    '''
+    TEST FUNCTION
+    '''
+    msg = ['A', 'A', 'H', '0', '2', '9', 'B', '6']
+    for i in msg:
+        device.write(i.encode('ascii', 'ignore'))
+        time.sleep(0.001)
+
+### SERIAL CONTROL ###
 
 def open_serial(device):
     '''
     Prevents the permissions to /dev/ttyS0 being
     blocked after closing and opening the port.
     '''
+    active_uart()
     os.system('sudo chmod a+rw /dev/ttyS0')
     device.open()
 
-# GPIO INDICATIONS
+def idle_uart(pin):
+    '''
+    Sets UART Tx pin to input while process
+    begins
+    '''
+    gpio.setup(pin, gpio.IN)
+
+def active_uart():
+    '''
+    Resets UART Tx pin to be transmit-capable
+    '''
+    os.system('gpio -g mode 14 ALT5')
+
+########################
+### GPIO INDICATIONS ###
+########################
+
 def start_seq(vdd, vpp, idleLedPin, statusPin):
     '''
     Applies power to VDD and pulls
@@ -142,25 +171,38 @@ def pass_ind(idleLedPin, statusPin, passPin):
     time.sleep(2)
     gpio.output(passPin, gpio.LOW)
 
-# MATH UTILITY
+####################
+### MATH UTILITY ###
+####################
+
+def verify_checksum(msg):
+    '''
+    Verifies that the message received from
+    PIC for temperature reading is acceptable
+    by double checking the checksum
+    '''
+    checksum = 0
+    for i in msg[1:5]:
+        checksum += hexConv[i]
+
+    if hex(checksum)[-1].upper() == msg[-1]:
+        return True
+
+    return False
+
 def pull_hex_2_dec(msg):
     '''
     Combines the numbers received via serial
     and returns them as a single integer.
     '''
-    concat = ''
-    for i in msg[:-1]:
-        if (i).isdigit():
-            concat += i
-
-    return int(concat, 16)
+    return int(''.join(msg[1:5]), 16)
 
 def conv_digits(msg):
     '''
     Checks the message for digits and converts them
     to integers for checksum use
     '''
-    return [int(i) if i.isdigit() else i for i in msg]
+    return [int(i) if i.isdigit() else hexConv[i] for i in msg]
 
 def calc_set_point(roomTempReading):
     '''
@@ -184,5 +226,10 @@ def calc_set_point(roomTempReading):
     slope = (roomTemp - avgOffset) / roomTempReading
     return int((trigTemp - avgOffset) / slope)
 
+#######################
+### UTILITY TESTING ###
+#######################
+
 if __name__ == '__main__':
-    print(build_sp_msg(632))
+    message = ['G', '0', '2', '6', '2', 'A']
+    print(verify_checksum(message))
