@@ -147,6 +147,24 @@ def end_seq(vdd, vpp, idleLedPin, statusPin):
     gpio.output(idleLedPin, gpio.HIGH)
     gpio.output(statusPin, gpio.LOW)
 
+def exit_seq(passPin, idleLedPin, statusPin):
+    '''
+    LED Sequence to show program exit
+    '''
+    gpio.output(passPin, gpio.LOW)
+    gpio.output(idleLedPin, gpio.LOW)
+    gpio.output(statusPin, gpio.LOW)
+    for _ in range(3):
+        gpio.output(statusPin, gpio.HIGH)
+        time.sleep(0.2)
+        gpio.output(statusPin, gpio.LOW)
+        gpio.output(passPin, gpio.HIGH)
+        time.sleep(0.2)
+        gpio.output(passPin, gpio.LOW)
+        gpio.output(idleLedPin, gpio.HIGH)
+        time.sleep(0.2)
+        gpio.output(idleLedPin, gpio.LOW)
+
 def error_ind(idleLedPin):
     '''
     Uses red LED to indicate if there
@@ -204,7 +222,7 @@ def conv_digits(msg):
     '''
     return [int(i) if i.isdigit() else hexConv[i] for i in msg]
 
-def calc_set_point(roomTempReading):
+def calc_set_point(picMsg, temp):
     '''
     Takes the room temp reading from the pic
     and calculates the trip point based on
@@ -221,9 +239,8 @@ def calc_set_point(roomTempReading):
     '''
     avgOffset = -671
     trigTemp = 72
-    roomTemp = 25
 
-    slope = (roomTemp - avgOffset) / roomTempReading
+    slope = (temp - avgOffset) / picMsg
     return int((trigTemp - avgOffset) / slope)
 
 #######################

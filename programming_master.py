@@ -111,13 +111,13 @@ while True:
 
     # Exit Program if Button is Pressed
     if gpio.input(endBut):
+        util.exit_seq(passLed, idleLed, statusLed)
         break
 
     # When Program button is pressed
     if gpio.input(startBut):
 
-        # Give Programming Indication and Initialize
-        # Serial Protocol
+        # Initialize Serial Protocol
         util.start_seq(vdd, vpp, idleLed, statusLed)
         util.active_uart()
         time.sleep(0.53)
@@ -135,7 +135,8 @@ while True:
                 # Verify Checksum from Incoming Message to Continue
                 if util.verify_checksum(msg):
                     # Calculate/Build Set Point Message
-                    setPoint = util.calc_set_point(util.pull_hex_2_dec(msg))
+                    ### Needs to take data from temp sensor ###
+                    setPoint = util.calc_set_point(util.pull_hex_2_dec(msg), 25)
                     spMsg = util.build_sp_msg(setPoint)
                     # Send Message to PIC
                     util.open_serial(ser)
