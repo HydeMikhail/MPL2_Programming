@@ -208,12 +208,12 @@ def verify_checksum(msg):
 
     return False
 
-def pull_hex_2_dec(msg):
+def hex_2_dec(msg, startIndex):
     '''
     Combines the numbers received via serial
     and returns them as a single integer.
     '''
-    return int(''.join(msg[1:5]), 16)
+    return int(''.join(msg[startIndex:startIndex+4]), 16)
 
 def conv_digits(msg):
     '''

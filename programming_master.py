@@ -39,9 +39,11 @@ issue, the red idle LED will flash to indicate the issue.
 
 import time
 import os
+from os import path
 import serial
 import RPi.GPIO as gpio
 import util
+import log_util
 
 ##################
 ### GPIO SETUP ###
@@ -58,6 +60,13 @@ idleLed = 18
 statusLed = 23
 startBut = 27
 endBut = 22
+
+### Logging Setup ###
+
+timeStamp = log_util.update_time()
+file = 'Temp_Cal_Logs/' + log_util.filePreface + timeStamp + '.txt'
+if not path.exists(file):
+    log_util.create_log(timeStamp)
 
 ### Board Mode Setting ###
 
@@ -112,6 +121,8 @@ while True:
     # Exit Program if Button is Pressed
     if gpio.input(endBut):
         util.exit_seq(passLed, idleLed, statusLed)
+        log_util.add_new_line(file)
+        log_util.write_log(file, 'Program Exited\n')
         break
 
     # When Program button is pressed
@@ -127,17 +138,26 @@ while True:
             # Collect Message
             msg = util.read_msg(ser, 6, 50)
             ser.close()
+            if len(msg) > 0:
+                log_util.write_log(file, str(msg) + '    ' + str(util.hex_2_dec(msg, 1)) + '    ')
             # Verify Temperature Reading Message
             if msg == [] or msg[0] != 'G':
-                print('Message Missing or Incomplete')
+                log_util.write_log(file, 'Message Incomplete\n')
                 util.error_ind(idleLed)
             else:
                 # Verify Checksum from Incoming Message to Continue
                 if util.verify_checksum(msg):
                     # Calculate/Build Set Point Message
-                    ### Needs to take data from temp sensor ###
-                    setPoint = util.calc_set_point(util.pull_hex_2_dec(msg), 25)
+
+                    ### !!! READ TEMP SENSOR !!! ###
+
+                    setPoint = util.calc_set_point(util.hex_2_dec(msg, 1), 25)
                     spMsg = util.build_sp_msg(setPoint)
+                    if len(spMsg) == 8:
+                        log_util.write_log(file, str(spMsg) + '    ' +
+                                           str(util.hex_2_dec(spMsg, 3)) + '      ')
+                    else:
+                        log_util.write_log(file, 'Outbound Message Error' + '                  ')
                     # Send Message to PIC
                     util.open_serial(ser)
                     util.send_msg(spMsg, ser)
@@ -146,21 +166,23 @@ while True:
                     # Read Verification Message
                     reply = util.read_msg(ser, 1, 50)
                     if reply == ['Y']:
+                        log_util.write_log(file, 'Verified')
                         util.pass_ind(idleLed, statusLed, passLed)
                     else:
-                        print('Program Not Verified')
+                        log_util.write_log(file, 'Unverified')
                         util.error_ind(idleLed)
                 else:
-                    print('Checksum incorrect. Bad Message')
+                    log_util.write_log(file, 'Checksum incorrect. Bad Message')
                     util.error_ind(idleLed)
 
         except serial.SerialException:
-            print('Serial Exception. Problem with communication.')
+            log_util.write_log(file, 'Serial Exception. Problem with communication.')
             util.error_ind(idleLed)
 
         # Reset system to prepare for next calibration
         util.end_seq(vdd, vpp, idleLed, statusLed)
         ser.close()
+        log_util.add_new_line(file)
 
     # Sets Program loop rate. Keeps CPU from full-throttling
     time.sleep(0.00005)

@@ -7,6 +7,9 @@ for error diagnostics and process feedback.
 '''
 
 import datetime
+from os import path
+
+filePreface = 'Temp_Cal_'
 
 def update_time():
     '''
@@ -17,20 +20,42 @@ def update_time():
     nowTime = datetime.datetime.now()
     return nowTime.strftime('%m-%d-%y')
 
-def create_log(timeStamp):
+def create_log(timeStmp):
     '''
     Generates a new log file
     '''
-    file = open('Temp_Cal_Logs/Temp_Cal_%s.txt'%timeStamp, 'w')
-    file.write('Temperature Calibration Log %s'%timeStamp)
+    file = open('Temp_Cal_Logs/' + filePreface + '%s.txt'%timeStmp, 'w')
+    file.write('Temperature Calibration Log %s'%timeStmp + '\n\n')
+    file.write('         Inbound Message      | Dec Val |\
+                Outbound Message           | Dec Val |   Verification\n\n')
     file.close()
+    return 'Temp_Cal_Logs/Temp_Cal_%s.txt'%timeStmp
 
-def write_log(inMsg, outMsg):
+def write_log(file, message):
     '''
     Writes line to log
     '''
-    pass
+    obj = open(file, 'a')
+    obj.write(str(message) + '   ')
+    obj.close()
+
+def add_new_line(file):
+    '''
+    Starts new line
+    '''
+    obj = open(file, 'a')
+    obj.write('\n')
+    obj.close()
 
 if __name__ == '__main__':
     time = update_time()
-    create_log(time)
+    log = create_log(time)
+    write_log(log, 'Test 1')
+    add_new_line(log)
+    write_log(log, 'Test 2')
+    today = datetime.datetime.now()
+    timeStamp = today.strftime('%m-%d-%y')
+    if path.exists('Temp_Cal_Logs/' + filePreface + time + '.txt'):
+        print('Whoopee')
+    else:
+        print('Poopoo')
