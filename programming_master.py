@@ -145,8 +145,10 @@ while True:
             msg = gen_util.read_msg(ser, 6, 50)
             ser.close()
             if len(msg) > 0:
-                log_util.write_log(file, str(msg) + '    '
-                                   + str(gen_util.hex_2_dec(msg, 1)) + '    ')
+                log_util.write_log(file, str(msg)
+                                   + '    '
+                                   + str(gen_util.hex_2_dec(msg, 1))
+                                   + '    ')
             # Verify Temperature Reading Message
             if msg == [] or msg[0] != 'G':
                 log_util.write_log(file, 'Message Incomplete\n')
@@ -159,8 +161,9 @@ while True:
                     setPoint = gen_util.calc_set_point(gen_util.hex_2_dec(msg, 1), temp)
                     spMsg = gen_util.build_sp_msg(setPoint)
                     if len(spMsg) == 8:
-                        log_util.write_log(file, str(spMsg) + '    ' +
-                                           str(gen_util.hex_2_dec(spMsg, 3))
+                        log_util.write_log(file, str(spMsg)
+                                           + '    '
+                                           + str(gen_util.hex_2_dec(spMsg, 3))
                                            + '      ')
                     else:
                         log_util.write_log(file, 'Outbound Message Error'
