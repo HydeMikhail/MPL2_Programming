@@ -237,8 +237,8 @@ def calc_set_point(picMsg, temp):
     Trigger Temp = 72 C
     Average Offset = -671
     '''
-    avgOffset = -670
-    trigTemp = 70
+    avgOffset = -671
+    trigTemp = 72
 
     slope = (temp - avgOffset) / picMsg
     return int((trigTemp - avgOffset) / slope)

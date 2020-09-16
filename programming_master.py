@@ -142,7 +142,7 @@ while True:
 
         try:
             # Collect Message
-            msg = gen_util.read_msg(ser, 6, 50)
+            msg = gen_util.read_msg(ser, 6, 2)
             ser.close()
             if len(msg) > 0:
                 log_util.write_log(file, str(msg)
@@ -174,7 +174,7 @@ while True:
                     time.sleep(0.005)
                     gen_util.idle_uart(tx)
                     # Read Verification Message
-                    reply = gen_util.read_msg(ser, 1, 50)
+                    reply = gen_util.read_msg(ser, 1, 2)
                     if reply == ['Y']:
                         log_util.write_log(file, 'Verified')
                         gen_util.pass_ind(idleLed, statusLed, passLed)
