@@ -7,7 +7,7 @@ driver board.
 PHYSICAL GPIO:
 37 - 3.3 V   (VDD) ::: Provides power to PIC
 6 - GND      (GND) ::: Provides ground to PIC
-7 - GPIO     (VPP) ::: Used to signal start of programming procedure
+18 - GPIO     (VPP) ::: Used to signal start of programming procedure
 8 - Tx       (CLK) ::: Transmit Pin
 10 - Rx      (DAT) ::: Receive Pin
 
@@ -17,6 +17,8 @@ PHYSICAL GPIO:
 
 13 - GPIO (IN)     ::: Trigger Calibration Button
 15 - GPIO (IN)     ::: Close Application Button
+
+7 - GPIO (IN)     ::: Temperature Data
 
 The Pi is integrated with a fixture including 5 pins to interface
 with the MPL2 driver board, 2 indicator LEDs, and two buttons to
@@ -44,6 +46,7 @@ import serial
 import RPi.GPIO as gpio
 import util
 import log_util
+import temp_util
 
 ##################
 ### GPIO SETUP ###
@@ -52,7 +55,7 @@ import log_util
 ### Global Pin Values ###
 
 vdd = 26
-vpp = 4
+vpp = 24
 tx = 14
 rx = 15
 passLed = 17
@@ -60,6 +63,7 @@ idleLed = 18
 statusLed = 23
 startBut = 27
 endBut = 22
+tempPin = 4
 
 ### Logging Setup ###
 
@@ -89,6 +93,8 @@ gpio.output(statusLed, gpio.HIGH)
 
 gpio.setup(startBut, gpio.IN)
 gpio.setup(endBut, gpio.IN)
+
+gpio.setup(tempPin, gpio.IN)
 
 ### Serial Comm Permissions ###
 
@@ -148,10 +154,8 @@ while True:
                 # Verify Checksum from Incoming Message to Continue
                 if util.verify_checksum(msg):
                     # Calculate/Build Set Point Message
-
-                    ### !!! READ TEMP SENSOR !!! ###
-
-                    setPoint = util.calc_set_point(util.hex_2_dec(msg, 1), 25)
+                    temp = temp_util.read_temp()
+                    setPoint = util.calc_set_point(util.hex_2_dec(msg, 1), temp)
                     spMsg = util.build_sp_msg(setPoint)
                     if len(spMsg) == 8:
                         log_util.write_log(file, str(spMsg) + '    ' +
