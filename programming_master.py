@@ -44,7 +44,7 @@ import os
 from os import path
 import serial
 import RPi.GPIO as gpio
-import util
+import gen_util
 import log_util
 import temp_util
 
@@ -116,7 +116,7 @@ gpio.output(statusLed, gpio.LOW)
 
 ### Float Tx ###
 
-util.idle_uart(tx)
+gen_util.idle_uart(tx)
 
 #################
 ### Main Loop ###
@@ -126,7 +126,7 @@ while True:
 
     # Exit Program if Button is Pressed
     if gpio.input(endBut):
-        util.exit_seq(passLed, idleLed, statusLed)
+        gen_util.exit_seq(passLed, idleLed, statusLed)
         log_util.add_new_line(file)
         log_util.write_log(file, 'Program Exited\n')
         break
@@ -135,56 +135,59 @@ while True:
     if gpio.input(startBut):
 
         # Initialize Serial Protocol
-        util.start_seq(vdd, vpp, idleLed, statusLed)
-        util.active_uart()
+        gen_util.start_seq(vdd, vpp, idleLed, statusLed)
+        gen_util.active_uart()
         time.sleep(0.53)
-        util.open_serial(ser)
+        gen_util.open_serial(ser)
 
         try:
             # Collect Message
-            msg = util.read_msg(ser, 6, 50)
+            msg = gen_util.read_msg(ser, 6, 50)
             ser.close()
             if len(msg) > 0:
-                log_util.write_log(file, str(msg) + '    ' + str(util.hex_2_dec(msg, 1)) + '    ')
+                log_util.write_log(file, str(msg) + '    '
+                                   + str(gen_util.hex_2_dec(msg, 1)) + '    ')
             # Verify Temperature Reading Message
             if msg == [] or msg[0] != 'G':
                 log_util.write_log(file, 'Message Incomplete\n')
-                util.error_ind(idleLed)
+                gen_util.error_ind(idleLed)
             else:
                 # Verify Checksum from Incoming Message to Continue
-                if util.verify_checksum(msg):
+                if gen_util.verify_checksum(msg):
                     # Calculate/Build Set Point Message
                     temp = temp_util.read_temp()
-                    setPoint = util.calc_set_point(util.hex_2_dec(msg, 1), temp)
-                    spMsg = util.build_sp_msg(setPoint)
+                    setPoint = gen_util.calc_set_point(gen_util.hex_2_dec(msg, 1), temp)
+                    spMsg = gen_util.build_sp_msg(setPoint)
                     if len(spMsg) == 8:
                         log_util.write_log(file, str(spMsg) + '    ' +
-                                           str(util.hex_2_dec(spMsg, 3)) + '      ')
+                                           str(gen_util.hex_2_dec(spMsg, 3))
+                                           + '      ')
                     else:
-                        log_util.write_log(file, 'Outbound Message Error' + '                  ')
+                        log_util.write_log(file, 'Outbound Message Error'
+                                           + '                  ')
                     # Send Message to PIC
-                    util.open_serial(ser)
-                    util.send_msg(spMsg, ser)
+                    gen_util.open_serial(ser)
+                    gen_util.send_msg(spMsg, ser)
                     time.sleep(0.005)
-                    util.idle_uart(tx)
+                    gen_util.idle_uart(tx)
                     # Read Verification Message
-                    reply = util.read_msg(ser, 1, 50)
+                    reply = gen_util.read_msg(ser, 1, 50)
                     if reply == ['Y']:
                         log_util.write_log(file, 'Verified')
-                        util.pass_ind(idleLed, statusLed, passLed)
+                        gen_util.pass_ind(idleLed, statusLed, passLed)
                     else:
                         log_util.write_log(file, 'Unverified')
-                        util.error_ind(idleLed)
+                        gen_util.error_ind(idleLed)
                 else:
                     log_util.write_log(file, 'Checksum incorrect. Bad Message')
-                    util.error_ind(idleLed)
+                    gen_util.error_ind(idleLed)
 
         except serial.SerialException:
             log_util.write_log(file, 'Serial Exception. Problem with communication.')
-            util.error_ind(idleLed)
+            gen_util.error_ind(idleLed)
 
         # Reset system to prepare for next calibration
-        util.end_seq(vdd, vpp, idleLed, statusLed)
+        gen_util.end_seq(vdd, vpp, idleLed, statusLed)
         ser.close()
         log_util.add_new_line(file)
 
