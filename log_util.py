@@ -7,7 +7,6 @@ for error diagnostics and process feedback.
 '''
 
 import datetime
-from os import path
 
 filePreface = 'Temp_Cal_'
 
@@ -46,16 +45,3 @@ def add_new_line(file):
     obj = open(file, 'a')
     obj.write('\n')
     obj.close()
-
-if __name__ == '__main__':
-    time = update_time()
-    log = create_log(time)
-    write_log(log, 'Test 1')
-    add_new_line(log)
-    write_log(log, 'Test 2')
-    today = datetime.datetime.now()
-    timeStamp = today.strftime('%m-%d-%y')
-    if path.exists('Temp_Cal_Logs/' + filePreface + time + '.txt'):
-        print('Whoopee')
-    else:
-        print('Poopoo')

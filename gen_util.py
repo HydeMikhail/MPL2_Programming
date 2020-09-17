@@ -12,17 +12,16 @@ import RPi.GPIO as gpio
 ### Number Conversion Has Tables ###
 ####################################
 
-hexConv = {'0': 0, '1': 1, '2': 2, '3': 3,
-           '4': 4, '5': 5, '6': 6, '7': 7,
-           '8': 8, '9': 9, 'A': 10, 'B': 11,
-           'C': 12, 'D':13, 'E': 14, 'F': 15,
-           'G': 'G'}
+hexConv = {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4,
+           '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+           'A': 10, 'B': 11, 'C': 12, 'D':13, 'E': 14,
+           'F': 15, 'G': 'G'}
 
-acceptedChars = ['A', 'B', 'C', 'D',
-                 'E', 'F', 'G', 'H',
-                 'Y', '0', '1', '2',
-                 '3', '4', '5', '6',
-                 '7', '8', '9']
+accChar = ['A', 'B', 'C', 'D',
+           'E', 'F', 'G', 'H',
+           'Y', '0', '1', '2',
+           '3', '4', '5', '6',
+           '7', '8', '9']
 
 #######################
 #### SERIAL UTILITY ###
@@ -46,9 +45,9 @@ def read_msg(device, messageLength, timeout):
         if len(msg) == messageLength:
             break
 
-        rawTemp = device.read()
-        if rawTemp.decode('ascii', 'ignore') in acceptedChars:
-            msg.append(rawTemp.decode('ascii', 'ignore'))
+        rawTemp = device.read().decode('ascii', 'ignore')
+        if rawTemp in accChar:
+            msg.append(rawTemp)
 
         i += 1
 
@@ -63,8 +62,6 @@ def make_checksum(number):
     for i in number[2:]:
         checksum += int(i, 16)
 
-    if hex(checksum)[-1].isdigit():
-        return hex(checksum)[-1]
     return hex(checksum)[-1].upper()
 
 def build_sp_msg(setPoint):
@@ -90,16 +87,19 @@ def send_msg(msg, device):
         device.write(i.encode('ascii', 'ignore'))
         time.sleep(0.001)
 
-def send_dumb_msg(device):
-    '''
-    TEST FUNCTION
-    '''
-    msg = ['A', 'A', 'H', '0', '2', '9', 'B', '6']
-    for i in msg:
-        device.write(i.encode('ascii', 'ignore'))
-        time.sleep(0.001)
-
 ### SERIAL CONTROL ###
+def active_uart():
+    '''
+    Resets UART Tx pin to be transmit-capable
+    '''
+    os.system('gpio -g mode 14 ALT5')
+
+def idle_uart(pin):
+    '''
+    Sets UART Tx pin to input while process
+    begins
+    '''
+    gpio.setup(pin, gpio.IN)
 
 def open_serial(device):
     '''
@@ -109,19 +109,6 @@ def open_serial(device):
     active_uart()
     os.system('sudo chmod a+rw /dev/ttyS0')
     device.open()
-
-def idle_uart(pin):
-    '''
-    Sets UART Tx pin to input while process
-    begins
-    '''
-    gpio.setup(pin, gpio.IN)
-
-def active_uart():
-    '''
-    Resets UART Tx pin to be transmit-capable
-    '''
-    os.system('gpio -g mode 14 ALT5')
 
 ########################
 ### GPIO INDICATIONS ###
@@ -237,7 +224,7 @@ def calc_set_point(picMsg, temp):
     Trigger Temp = 72 C
     Average Offset = -671
     '''
-    avgOffset = -671
+    avgOffset = -771
     trigTemp = 72
 
     slope = (temp - avgOffset) / picMsg

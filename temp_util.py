@@ -37,8 +37,7 @@ def read_temp():
     equalsPos = lines[1].find('t=')
     if equalsPos != -1:
         tempString = lines[1][equalsPos+2:]
-        tempC = float(tempString) / 1000.0
-        return tempC
+        return float(tempString) / 1000.0
 
 if __name__ == '__main__':
     while True:

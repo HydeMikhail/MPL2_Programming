@@ -7,7 +7,7 @@ driver board.
 PHYSICAL GPIO:
 37 - 3.3 V   (VDD) ::: Provides power to PIC
 6 - GND      (GND) ::: Provides ground to PIC
-18 - GPIO     (VPP) ::: Used to signal start of programming procedure
+18 - GPIO    (VPP) ::: Used to signal start of programming procedure
 8 - Tx       (CLK) ::: Transmit Pin
 10 - Rx      (DAT) ::: Receive Pin
 
@@ -54,7 +54,7 @@ import temp_util
 
 ### Global Pin Values ###
 
-vdd = 26
+vdd = 25
 vpp = 24
 tx = 14
 rx = 15
@@ -142,7 +142,7 @@ while True:
 
         try:
             # Collect Message
-            msg = gen_util.read_msg(ser, 6, 2)
+            msg = gen_util.read_msg(ser, 6, 100)
             ser.close()
             if len(msg) > 0:
                 log_util.write_log(file, str(msg)
@@ -174,7 +174,7 @@ while True:
                     time.sleep(0.005)
                     gen_util.idle_uart(tx)
                     # Read Verification Message
-                    reply = gen_util.read_msg(ser, 1, 2)
+                    reply = gen_util.read_msg(ser, 1, 100)
                     if reply == ['Y']:
                         log_util.write_log(file, 'Verified')
                         gen_util.pass_ind(idleLed, statusLed, passLed)
