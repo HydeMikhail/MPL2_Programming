@@ -159,7 +159,8 @@ while True:
                     # Calculate/Build Set Point Message
                     try:
                         temp = temp_util.read_temp()
-                        setPoint = gen_util.calc_set_point(gen_util.hex_2_dec(msg, 1), temp, idleLed)
+                        setPoint = gen_util.calc_set_point(gen_util.hex_2_dec(msg, 1),
+                                                           temp, idleLed)
                         spMsg = gen_util.build_sp_msg(setPoint)
                         if len(spMsg) == 8:
                             log_util.write_log(file, str(spMsg)
@@ -168,7 +169,7 @@ while True:
                                                + '      ')
                         else:
                             log_util.write_log(file, 'Outbound Message Error'
-                                           + '                  ')
+                                               + '                  ')
                         # Send Message to PIC
                         gen_util.open_serial(ser)
                         gen_util.send_msg(spMsg, ser)
