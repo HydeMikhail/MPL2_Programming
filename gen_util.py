@@ -209,7 +209,7 @@ def conv_digits(msg):
     '''
     return [int(i) if i.isdigit() else hexConv[i] for i in msg]
 
-def calc_set_point(picMsg, temp):
+def calc_set_point(picMsg, temp, errorPin):
     '''
     Takes the room temp reading from the pic
     and calculates the trip point based on
@@ -224,11 +224,14 @@ def calc_set_point(picMsg, temp):
     Trigger Temp = 72 C
     Average Offset = -671
     '''
-    avgOffset = -771
-    trigTemp = 72
+    try:
+        avgOffset = -771
+        trigTemp = 72
 
-    slope = (temp - avgOffset) / picMsg
-    return int((trigTemp - avgOffset) / slope)
+        slope = (temp - avgOffset) / picMsg
+        return int((trigTemp - avgOffset) / slope)
+    except ZeroDivisionError:
+        error_ind(errorPin)
 
 #######################
 ### UTILITY TESTING ###

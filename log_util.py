@@ -23,12 +23,12 @@ def create_log(timeStmp):
     '''
     Generates a new log file
     '''
-    file = open('Temp_Cal_Logs/' + filePreface + '%s.txt'%timeStmp, 'w')
+    file = open('MPL2_Programming/Temp_Cal_Logs/' + filePreface + '%s.txt'%timeStmp, 'w')
     file.write('Temperature Calibration Log %s'%timeStmp + '\n\n')
     file.write('         Inbound Message      | Dec Val |\
                 Outbound Message           | Dec Val |   Verification\n\n')
     file.close()
-    return 'Temp_Cal_Logs/Temp_Cal_%s.txt'%timeStmp
+    return 'MPL2_Programming/Temp_Cal_Logs/Temp_Cal_%s.txt'%timeStmp
 
 def write_log(file, message):
     '''

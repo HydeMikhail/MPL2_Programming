@@ -68,7 +68,7 @@ tempPin = 4
 ### Logging Setup ###
 
 timeStamp = log_util.update_time()
-file = 'Temp_Cal_Logs/' + log_util.filePreface + timeStamp + '.txt'
+file = 'MPL2_Programming/Temp_Cal_Logs/' + log_util.filePreface + timeStamp + '.txt'
 if not path.exists(file):
     log_util.create_log(timeStamp)
 
@@ -137,12 +137,12 @@ while True:
         # Initialize Serial Protocol
         gen_util.start_seq(vdd, vpp, idleLed, statusLed)
         gen_util.active_uart()
-        time.sleep(0.53)
+        time.sleep(0.48)
         gen_util.open_serial(ser)
 
         try:
             # Collect Message
-            msg = gen_util.read_msg(ser, 6, 100)
+            msg = gen_util.read_msg(ser, 6, 200)
             ser.close()
             if len(msg) > 0:
                 log_util.write_log(file, str(msg)
@@ -157,29 +157,32 @@ while True:
                 # Verify Checksum from Incoming Message to Continue
                 if gen_util.verify_checksum(msg):
                     # Calculate/Build Set Point Message
-                    temp = temp_util.read_temp()
-                    setPoint = gen_util.calc_set_point(gen_util.hex_2_dec(msg, 1), temp)
-                    spMsg = gen_util.build_sp_msg(setPoint)
-                    if len(spMsg) == 8:
-                        log_util.write_log(file, str(spMsg)
-                                           + '    '
-                                           + str(gen_util.hex_2_dec(spMsg, 3))
-                                           + '      ')
-                    else:
-                        log_util.write_log(file, 'Outbound Message Error'
+                    try:
+                        temp = temp_util.read_temp()
+                        setPoint = gen_util.calc_set_point(gen_util.hex_2_dec(msg, 1), temp, idleLed)
+                        spMsg = gen_util.build_sp_msg(setPoint)
+                        if len(spMsg) == 8:
+                            log_util.write_log(file, str(spMsg)
+                                               + '    '
+                                               + str(gen_util.hex_2_dec(spMsg, 3))
+                                               + '      ')
+                        else:
+                            log_util.write_log(file, 'Outbound Message Error'
                                            + '                  ')
-                    # Send Message to PIC
-                    gen_util.open_serial(ser)
-                    gen_util.send_msg(spMsg, ser)
-                    time.sleep(0.005)
-                    gen_util.idle_uart(tx)
-                    # Read Verification Message
-                    reply = gen_util.read_msg(ser, 1, 100)
-                    if reply == ['Y']:
-                        log_util.write_log(file, 'Verified')
-                        gen_util.pass_ind(idleLed, statusLed, passLed)
-                    else:
-                        log_util.write_log(file, 'Unverified')
+                        # Send Message to PIC
+                        gen_util.open_serial(ser)
+                        gen_util.send_msg(spMsg, ser)
+                        time.sleep(0.005)
+                        gen_util.idle_uart(tx)
+                        # Read Verification Message
+                        reply = gen_util.read_msg(ser, 1, 200)
+                        if reply == ['Y']:
+                            log_util.write_log(file, 'Verified')
+                            gen_util.pass_ind(idleLed, statusLed, passLed)
+                        else:
+                            log_util.write_log(file, 'Unverified')
+                            gen_util.error_ind(idleLed)
+                    except ValueError:
                         gen_util.error_ind(idleLed)
                 else:
                     log_util.write_log(file, 'Checksum incorrect. Bad Message')
