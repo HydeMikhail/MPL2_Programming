@@ -5,20 +5,20 @@ Main Program to coordinate temperature calibration with MPL2
 driver board.
 
 PHYSICAL GPIO:
-37 - 3.3 V   (VDD) ::: Provides power to PIC
-6 - GND      (GND) ::: Provides ground to PIC
-18 - GPIO    (VPP) ::: Used to signal start of programming procedure
+12 - 3.3 V   (VDD) ::: Provides power to PIC
+14 - GND     (GND) ::: Provides ground to PIC
+16 - GPIO    (VPP) ::: Used to signal start of programming procedure
 8 - Tx       (CLK) ::: Transmit Pin
 10 - Rx      (DAT) ::: Receive Pin
 
 11 - GPIO (OUT)    ::: Pass LED (GREEN)
-12 - GPIO (OUT)    ::: Idle LED (RED)
-16 - GPIO (OUT)    ::: Status LED (WHITE)
+13 - GPIO (OUT)    ::: Idle LED (RED)
+15 - GPIO (OUT)    ::: Status LED (WHITE)
 
-13 - GPIO (IN)     ::: Trigger Calibration Button
-15 - GPIO (IN)     ::: Close Application Button
+29 - GPIO (IN)     ::: Trigger Calibration Button
+31 - GPIO (IN)     ::: Close Application Button
 
-7 - GPIO (IN)     ::: Temperature Data
+7 - GPIO (IN)      ::: Temperature Data
 
 The Pi is integrated with a fixture including 5 pins to interface
 with the MPL2 driver board, 2 indicator LEDs, and two buttons to
@@ -54,15 +54,15 @@ import temp_util
 
 ### Global Pin Values ###
 
-vdd = 25
-vpp = 24
+vdd = 18
+vpp = 23
 tx = 14
 rx = 15
 passLed = 17
-idleLed = 18
-statusLed = 23
-startBut = 27
-endBut = 22
+idleLed = 27
+statusLed = 22
+startBut = 5
+endBut = 6
 tempPin = 4
 
 ### Logging Setup ###

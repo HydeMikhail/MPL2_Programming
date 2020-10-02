@@ -159,7 +159,7 @@ def error_ind(idleLedPin):
     3 times and is passed as an exception
     to keep the program from terminating.
     '''
-    for _ in range(5):
+    for _ in range(3):
         gpio.output(idleLedPin, gpio.LOW)
         time.sleep(0.25)
         gpio.output(idleLedPin, gpio.HIGH)
@@ -173,7 +173,7 @@ def pass_ind(idleLedPin, statusPin, passPin):
     gpio.output(idleLedPin, gpio.LOW)
     gpio.output(statusPin, gpio.LOW)
     gpio.output(passPin, gpio.HIGH)
-    time.sleep(2)
+    time.sleep(1.5)
     gpio.output(passPin, gpio.LOW)
 
 ####################
