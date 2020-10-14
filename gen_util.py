@@ -106,7 +106,6 @@ def open_serial(device):
     Prevents the permissions to /dev/ttyS0 being
     blocked after closing and opening the port.
     '''
-    active_uart()
     os.system('sudo chmod a+rw /dev/ttyS0')
     device.open()
 
