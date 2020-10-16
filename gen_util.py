@@ -230,5 +230,5 @@ def calc_set_point(picMsg):
 #######################
 
 if __name__ == '__main__':
-    message = ['G', '0', '2', '6', '2', 'A']
-    print(verify_checksum(message))
+    print(hex_2_dec(['G', '0', '2', '8', '0', 'A'], 1))
+    print(calc_set_point(hex_2_dec(['G', '0', '2', '8', '0', 'A'], 1)))
